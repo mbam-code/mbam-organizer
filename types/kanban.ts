@@ -26,6 +26,29 @@ export interface Column {
   title: string
   tasks: Task[]
   color?: string
+  workflows?: Workflow[]
+}
+
+export interface Workflow {
+  id: string
+  name: string
+  description?: string
+  trigger: WorkflowTrigger
+  actions: WorkflowAction[]
+  enabled: boolean
+}
+
+export interface WorkflowTrigger {
+  type: "task-added" | "task-moved-here" | "task-moved-away" | "manual"
+}
+
+export interface WorkflowAction {
+  id: string
+  type: "move-task" | "send-notification" | "update-field"
+  targetColumnId?: string
+  message?: string
+  fieldName?: string
+  fieldValue?: string
 }
 
 export interface Rule {

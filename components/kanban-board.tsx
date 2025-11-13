@@ -1,11 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { DragDropContext, type DropResult } from "@hello-pangea/dnd"
+import { DragDropContext, type DropResult, Draggable, Droppable } from "@hello-pangea/dnd"
 import { Plus } from "lucide-react"
 import Column from "./column"
 import TaskDetailSidebar from "./task-detail-sidebar"
-import { ThemeToggle } from "./theme-toggle"
+import ColumnDetailSidebar from "./column-detail-sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import type { Task, Column as ColumnType } from "@/types/kanban"
@@ -23,6 +23,7 @@ export default function KanbanBoard() {
   const [newColumnTitle, setNewColumnTitle] = useState("")
   const [isLoaded, setIsLoaded] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [selectedColumn, setSelectedColumn] = useState<ColumnType | null>(null)
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -101,7 +102,7 @@ export default function KanbanBoard() {
               createdAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
             },
           ],
-          color: "bg-blue-50 dark:bg-blue-900/30",
+          color: "bg-amber-50 dark:bg-amber-900/30",
         },
         {
           id: "col-3",
@@ -142,7 +143,7 @@ export default function KanbanBoard() {
               createdAt: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
             },
           ],
-          color: "bg-green-50 dark:bg-green-900/30",
+          color: "bg-green-50 dark:bg-emerald-900/30",
         },
       ])
     }
@@ -157,7 +158,7 @@ export default function KanbanBoard() {
   }, [columns, isLoaded])
 
   const handleDragEnd = (result: DropResult) => {
-    const { source, destination, draggableId } = result
+    const { source, destination, draggableId, type } = result
 
     // No valid destination
     if (!destination) return
@@ -165,6 +166,16 @@ export default function KanbanBoard() {
     // Same position
     if (source.droppableId === destination.droppableId && source.index === destination.index) return
 
+    // Handle column reordering
+    if (type === "COLUMN") {
+      const newColumns = Array.from(columns)
+      const [movedColumn] = newColumns.splice(source.index, 1)
+      newColumns.splice(destination.index, 0, movedColumn)
+      setColumns(newColumns)
+      return
+    }
+
+    // Handle task reordering within columns
     // Find the task
     let task: Task | undefined
     let sourceColumnIndex = -1
@@ -259,72 +270,83 @@ export default function KanbanBoard() {
 
   if (!isLoaded) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-8 flex items-center justify-center">
-        <div className="text-gray-600 dark:text-gray-300">Loading...</div>
+      <div className="min-h-screen bg-[var(--bg-primary)] dark:bg-[var(--dark-bg-primary)] p-8 flex items-center justify-center">
+        <div className="text-[var(--text-secondary)] dark:text-[var(--dark-text-secondary)]">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-8">
+    <div className="min-h-screen bg-[var(--bg-primary)] dark:bg-[var(--dark-bg-primary)] p-8">
       <div className="max-w-full">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">MBAM Organizer</h1>
-            <p className="text-lg text-gray-600 dark:text-gray-300">Production line content management system</p>
-          </div>
-          <ThemeToggle />
-        </div>
-
         <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="flex gap-6 overflow-x-auto pb-4">
-            {columns.map((column) => (
-              <Column
-                key={column.id}
-                column={column}
-                onAddTask={addTask}
-                onTaskClick={setSelectedTask}
-                onDeleteColumn={() => deleteColumn(column.id)}
-                onUpdateColumn={updateColumn}
-                onDuplicateTask={duplicateTask}
-              />
-            ))}
-
-            {isAddingColumn ? (
-              <div className="shrink-0 w-72 flex flex-col bg-white dark:bg-gray-800 rounded-md shadow-sm border dark:border-gray-700 p-4">
-                <Input
-                  value={newColumnTitle}
-                  onChange={(e) => setNewColumnTitle(e.target.value)}
-                  placeholder="Enter column name"
-                  className="mb-3 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-                />
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={addColumn}>
-                    Create
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setIsAddingColumn(false)
-                      setNewColumnTitle("")
-                    }}
-                    className="dark:border-gray-600 dark:text-gray-200"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <Button
-                variant="outline"
-                className="shrink-0 h-12 px-4 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
-                onClick={() => setIsAddingColumn(true)}
+          <Droppable droppableId="columns" type="COLUMN" direction="horizontal">
+            {(provided, snapshot) => (
+              <div
+                className="flex gap-6 overflow-x-auto pb-4"
+                ref={provided.innerRef}
+                {...provided.droppableProps}
               >
-                <Plus className="mr-2 h-4 w-4" /> Add Column
-              </Button>
+                {columns.map((column, index) => (
+                  <Draggable key={column.id} draggableId={column.id} index={index} type="COLUMN">
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                      >
+                        <Column
+                          column={column}
+                          onAddTask={addTask}
+                          onTaskClick={setSelectedTask}
+                          onColumnClick={() => setSelectedColumn(column)}
+                          onDeleteColumn={() => deleteColumn(column.id)}
+                          onUpdateColumn={updateColumn}
+                          onDuplicateTask={duplicateTask}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+
+                {isAddingColumn ? (
+                  <div className="shrink-0 w-72 flex flex-col bg-[var(--bg-secondary)] dark:bg-[var(--dark-bg-secondary)] rounded-md shadow-sm border border-[var(--border-color)] dark:border-[var(--dark-border-color)] p-4">
+                    <Input
+                      value={newColumnTitle}
+                      onChange={(e) => setNewColumnTitle(e.target.value)}
+                      placeholder="Enter column name"
+                      className="mb-3 bg-[var(--bg-primary)] dark:bg-[var(--dark-bg-primary)] border-[var(--border-color)] dark:border-[var(--dark-border-color)] text-[var(--text-primary)] dark:text-[var(--dark-text-primary)]"
+                    />
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={addColumn}>
+                        Create
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setIsAddingColumn(false)
+                          setNewColumnTitle("")
+                        }}
+                        className="border-[var(--border-color)] dark:border-[var(--dark-border-color)] text-[var(--text-primary)] dark:text-[var(--dark-text-primary)]"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    style={{ backgroundColor: "#B12B28", color: "white" }}
+                    className="shrink-0 h-12 px-4 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+                    onClick={() => setIsAddingColumn(true)}
+                  >
+                    <Plus className="mr-2 h-5 w-5" /> Add Column
+                  </Button>
+                )}
+                {provided.placeholder}
+              </div>
             )}
-          </div>
+          </Droppable>
         </DragDropContext>
 
         <TaskDetailSidebar
@@ -338,6 +360,13 @@ export default function KanbanBoard() {
               duplicateTask(task, sourceColumn.id)
             }
           }}
+        />
+
+        <ColumnDetailSidebar
+          column={selectedColumn}
+          columns={columns}
+          onClose={() => setSelectedColumn(null)}
+          onUpdate={updateColumn}
         />
       </div>
     </div>
