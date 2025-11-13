@@ -3,10 +3,12 @@
 import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
 import SkillsDropdown, { type Skill } from "@/components/skills-dropdown"
-import { CheckCircle2, Type, Zap, Wrench, Palette, FileText, Copy, RotateCcw, Download } from "lucide-react"
+import DocumentViewer from "@/components/document-viewer"
+import ChatPanel, { type ChatMessage } from "@/components/chat-panel"
+import { CheckCircle2, Type, Zap, Wrench, Palette, Download, FileEdit, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { generateId } from "@/lib/utils"
 
 const AVAILABLE_SKILLS: Skill[] = [
   {
@@ -52,11 +54,13 @@ const AVAILABLE_SKILLS: Skill[] = [
 ]
 
 export default function ContentRefinement() {
-  const [originalContent, setOriginalContent] = React.useState("")
-  const [refinedContent, setRefinedContent] = React.useState("")
+  const [documentContent, setDocumentContent] = React.useState("")
+  const [isEditing, setIsEditing] = React.useState(false)
+  const [editingContent, setEditingContent] = React.useState("")
   const [skills, setSkills] = React.useState<Skill[]>(AVAILABLE_SKILLS)
-  const [isRefining, setIsRefining] = React.useState(false)
-  const [hasRefined, setHasRefined] = React.useState(false)
+  const [messages, setMessages] = React.useState<ChatMessage[]>([])
+  const [isLoading, setIsLoading] = React.useState(false)
+  const [selectedText, setSelectedText] = React.useState<string | undefined>()
 
   const handleSkillToggle = (skillId: string) => {
     setSkills(prevSkills =>
@@ -66,248 +70,256 @@ export default function ContentRefinement() {
     )
   }
 
-  const handleRefine = async () => {
-    if (!originalContent.trim()) return
+  const handleStartEditing = () => {
+    setEditingContent(documentContent)
+    setIsEditing(true)
+  }
 
-    setIsRefining(true)
-    setHasRefined(true)
+  const handleSaveDocument = () => {
+    setDocumentContent(editingContent)
+    setIsEditing(false)
+  }
 
-    // Simulate AI processing time
-    await new Promise(resolve => setTimeout(resolve, 1500))
+  const handleCancelEditing = () => {
+    setEditingContent("")
+    setIsEditing(false)
+  }
 
-    // In a real implementation, this would call an AI API with the enabled skills
-    // For now, we'll just set the refined content to show the UX
-    const enabledSkills = skills.filter(s => s.enabled)
-
-    if (enabledSkills.length === 0) {
-      setRefinedContent(originalContent)
-    } else {
-      // Placeholder: In production, this would call AI with skill instructions
-      const skillsText = enabledSkills.map(s => s.label).join(", ")
-      setRefinedContent(
-        `[Content refined with: ${skillsText}]\n\n${originalContent}\n\n` +
-        `Note: In production, this would be processed by Claude with the selected expert skills applied incrementally. ` +
-        `Each skill adds specific improvements without rewriting the entire content.`
-      )
+  const handleSendMessage = async (instruction: string) => {
+    if (!documentContent.trim()) {
+      alert("Please write or paste some content in the document first")
+      return
     }
 
-    setIsRefining(false)
-  }
+    // Add user message to chat
+    const userMessage: ChatMessage = {
+      id: generateId(),
+      role: "user",
+      content: instruction,
+      selectedText,
+      timestamp: new Date(),
+    }
 
-  const handleCopyRefined = async () => {
-    if (refinedContent) {
-      await navigator.clipboard.writeText(refinedContent)
+    setMessages(prev => [...prev, userMessage])
+    setIsLoading(true)
+
+    try {
+      const activeSkills = skills.filter(s => s.enabled).map(s => ({
+        label: s.label,
+        description: s.description,
+      }))
+
+      const response = await fetch("/api/refine", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          document: documentContent,
+          instruction,
+          selectedText,
+          activeSkills,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to refine content")
+      }
+
+      const data = await response.json()
+
+      // Update document with refined content
+      setDocumentContent(data.refinedContent)
+
+      // Add assistant message
+      const assistantMessage: ChatMessage = {
+        id: generateId(),
+        role: "assistant",
+        content: "Document updated successfully",
+        timestamp: new Date(),
+      }
+
+      setMessages(prev => [...prev, assistantMessage])
+
+      // Clear selection after processing
+      setSelectedText(undefined)
+    } catch (error: any) {
+      console.error("Error refining content:", error)
+
+      const errorMessage: ChatMessage = {
+        id: generateId(),
+        role: "assistant",
+        content: `Error: ${error.message}. Please make sure your API key is configured correctly.`,
+        timestamp: new Date(),
+      }
+
+      setMessages(prev => [...prev, errorMessage])
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleAcceptRefined = () => {
-    setOriginalContent(refinedContent)
-    setRefinedContent("")
-    setHasRefined(false)
+  const handleTextSelect = (text: string) => {
+    setSelectedText(text)
   }
 
-  const handleReset = () => {
-    setRefinedContent("")
-    setHasRefined(false)
+  const handleClearSelection = () => {
+    setSelectedText(undefined)
   }
 
   const handleExport = () => {
-    const content = refinedContent || originalContent
+    const content = documentContent
     const blob = new Blob([content], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `content-${Date.now()}.txt`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
+    const link = window.document.createElement('a')
+    link.href = url
+    link.download = `content-${Date.now()}.txt`
+    window.document.body.appendChild(link)
+    link.click()
+    window.document.body.removeChild(link)
     URL.revokeObjectURL(url)
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
+      <div className="max-w-[1800px] mx-auto">
+        {/* Header */}
+        <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             Content Refinement Studio
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Create content and refine it step-by-step with expert skills. Toggle skills on/off to control exactly how your content is improved.
+            Refine your content conversationally with Claude. Select skills to control which expert perspectives guide the refinement.
           </p>
         </div>
 
         {/* Skills Control Panel */}
-        <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-                Refinement Skills
-              </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Select which expert skills to apply to your content
-              </p>
+        <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-4 flex-wrap flex-1">
+              <SkillsDropdown skills={skills} onSkillToggle={handleSkillToggle} />
+
+              {/* Active Skills Display */}
+              <div className="flex flex-wrap gap-2">
+                {skills.filter(s => s.enabled).map(skill => (
+                  <div
+                    key={skill.id}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium"
+                    style={{
+                      backgroundColor: `${skill.color}20`,
+                      color: skill.color,
+                      border: `1px solid ${skill.color}40`,
+                    }}
+                  >
+                    <skill.icon className="w-3 h-3" />
+                    {skill.label}
+                  </div>
+                ))}
+              </div>
             </div>
-            <SkillsDropdown skills={skills} onSkillToggle={handleSkillToggle} />
-          </div>
 
-          {/* Active Skills Display */}
-          <div className="flex flex-wrap gap-2">
-            {skills
-              .filter(s => s.enabled)
-              .map(skill => (
-                <div
-                  key={skill.id}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium"
-                  style={{
-                    backgroundColor: `${skill.color}20`,
-                    color: skill.color,
-                    border: `1px solid ${skill.color}40`,
-                  }}
-                >
-                  <skill.icon className="w-3.5 h-3.5" />
-                  {skill.label}
-                </div>
-              ))}
-            {skills.filter(s => s.enabled).length === 0 && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 italic">
-                No skills selected. Choose skills from the dropdown above.
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Content Editor Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Original Content */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-4">
-              <Label htmlFor="original-content" className="text-lg font-semibold text-gray-900 dark:text-white">
-                Your Content
-              </Label>
+            <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleExport}
-                disabled={!originalContent}
-                className="text-xs"
+                disabled={!documentContent}
               >
-                <Download className="w-3.5 h-3.5 mr-1" />
+                <Download className="w-4 h-4 mr-2" />
                 Export
               </Button>
             </div>
-            <Textarea
-              id="original-content"
-              value={originalContent}
-              onChange={(e) => setOriginalContent(e.target.value)}
-              placeholder="Start writing your content here..."
-              className="min-h-[500px] resize-none font-mono text-sm"
-            />
-            <div className="mt-4 flex items-center justify-between">
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                {originalContent.length} characters
-              </span>
-              <Button
-                onClick={handleRefine}
-                disabled={!originalContent.trim() || skills.filter(s => s.enabled).length === 0 || isRefining}
-                className={cn(
-                  "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700",
-                  "text-white font-semibold shadow-lg"
-                )}
-              >
-                {isRefining ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Refining...
-                  </>
-                ) : (
-                  <>
-                    <FileText className="w-4 h-4 mr-2" />
-                    Refine Content
-                  </>
-                )}
-              </Button>
-            </div>
           </div>
+        </div>
 
-          {/* Refined Content */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-4">
-              <Label className="text-lg font-semibold text-gray-900 dark:text-white">
-                Refined Output
-              </Label>
-              {hasRefined && (
+        {/* Main Content Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-300px)]">
+          {/* Left: Document Viewer/Editor */}
+          <div className="flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <FileEdit className="w-5 h-5" />
+                Document
+              </h2>
+              {!isEditing ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleStartEditing}
+                >
+                  Edit
+                </Button>
+              ) : (
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={handleCopyRefined}
-                    disabled={!refinedContent}
-                    className="text-xs"
+                    onClick={handleCancelEditing}
                   >
-                    <Copy className="w-3.5 h-3.5 mr-1" />
-                    Copy
+                    Cancel
                   </Button>
                   <Button
-                    variant="outline"
                     size="sm"
-                    onClick={handleReset}
-                    className="text-xs"
+                    onClick={handleSaveDocument}
+                    className="bg-blue-600 hover:bg-blue-700"
                   >
-                    <RotateCcw className="w-3.5 h-3.5 mr-1" />
-                    Reset
+                    Save
                   </Button>
                 </div>
               )}
             </div>
 
-            {hasRefined ? (
-              <>
-                <div className="min-h-[500px] p-4 rounded-md bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 overflow-auto">
-                  <pre className="whitespace-pre-wrap font-mono text-sm text-gray-900 dark:text-gray-100">
-                    {refinedContent}
-                  </pre>
-                </div>
-                <div className="mt-4 flex items-center justify-between">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {refinedContent.length} characters
-                  </span>
-                  <Button
-                    onClick={handleAcceptRefined}
-                    className="bg-green-600 hover:bg-green-700 text-white font-semibold"
-                  >
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                    Accept & Continue Editing
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <div className="min-h-[500px] flex items-center justify-center p-4 rounded-md bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
-                <div className="text-center">
-                  <FileText className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-3" />
-                  <p className="text-gray-600 dark:text-gray-400 mb-2">
-                    Refined content will appear here
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-500">
-                    Select skills and click "Refine Content" to get started
-                  </p>
-                </div>
-              </div>
-            )}
+            <div className="flex-1 overflow-hidden">
+              {isEditing ? (
+                <Textarea
+                  value={editingContent}
+                  onChange={(e) => setEditingContent(e.target.value)}
+                  placeholder="Start writing your content here..."
+                  className="h-full resize-none border-0 rounded-none focus:ring-0 font-serif"
+                />
+              ) : (
+                <DocumentViewer
+                  content={documentContent}
+                  onTextSelect={handleTextSelect}
+                  className="h-full border-0 rounded-none"
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Right: Chat Panel */}
+          <div className="flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                Refinement Chat
+              </h2>
+            </div>
+
+            <ChatPanel
+              messages={messages}
+              onSendMessage={handleSendMessage}
+              isLoading={isLoading}
+              selectedText={selectedText}
+              onClearSelection={handleClearSelection}
+              className="flex-1"
+            />
           </div>
         </div>
 
         {/* Instructions */}
         <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
           <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2">
-            How to use Content Refinement Studio:
+            How to use:
           </h3>
           <ol className="text-sm text-blue-800 dark:text-blue-400 space-y-1 ml-4 list-decimal">
-            <li>Write or paste your content in the left editor</li>
-            <li>Click the "Refinement Skills" dropdown to select which expert skills to apply</li>
-            <li>Click "Refine Content" to process your content with the selected skills</li>
-            <li>Review the refined output on the right side</li>
-            <li>Click "Accept & Continue Editing" to use the refined version and make further improvements</li>
-            <li>Toggle different skills on/off to refine step-by-step without full rewrites</li>
+            <li>Click "Edit" to write or paste your initial content</li>
+            <li>Select expert skills from the dropdown to guide Claude's refinements</li>
+            <li>Optionally, highlight text in the document to focus on specific sections</li>
+            <li>Type your refinement instructions in the chat (e.g., "Make the introduction more engaging")</li>
+            <li>Claude will revise the entire document and update it for you</li>
+            <li>Continue refining by giving more instructions or toggling different skills</li>
           </ol>
         </div>
       </div>
