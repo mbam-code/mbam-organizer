@@ -6,21 +6,34 @@ import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { Send, Loader2, Info } from "lucide-react"
 import type { ChatMessage } from "@/types/artifact"
+import { generateId } from "@/lib/utils"
+
+export interface Artifact {
+  identifier: string
+  type: string
+  title: string
+  content: string
+}
 
 export interface ArtifactChatPanelProps {
   messages: ChatMessage[]
+  selectedModel?: string
   onSendMessage?: (message: string) => void
+  onArtifactCreated?: (artifact: Artifact) => void
   isLoading?: boolean
   className?: string
 }
 
 export default function ArtifactChatPanel({
   messages,
+  selectedModel = "claude-3-5-haiku-20241022",
   onSendMessage,
+  onArtifactCreated,
   isLoading = false,
   className,
 }: ArtifactChatPanelProps) {
   const [input, setInput] = React.useState("")
+  const [isStreaming, setIsStreaming] = React.useState(false)
   const messagesEndRef = React.useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -31,11 +44,147 @@ export default function ArtifactChatPanel({
     scrollToBottom()
   }, [messages])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  /**
+   * Parses artifact tags from streamed text.
+   * Handles incomplete tags that may span across stream chunks.
+   *
+   * Returns: { chatText: string, artifact: Artifact | null }
+   */
+  const parseArtifactFromText = (text: string): { chatText: string; artifact: Artifact | null } => {
+    // Match artifact tags: <antArtifact identifier="..." type="..." title="...">content</antArtifact>
+    const artifactRegex = /<antArtifact\s+identifier="([^"]*)"\s+type="([^"]*)"\s+title="([^"]*)">([^]*?)<\/antArtifact>/g
+
+    let chatText = text
+    let artifact: Artifact | null = null
+
+    const match = artifactRegex.exec(text)
+    if (match) {
+      // Extract artifact
+      artifact = {
+        identifier: match[1],
+        type: match[2],
+        title: match[3],
+        content: match[4],
+      }
+
+      // Remove artifact tag from chat text
+      chatText = text.replace(artifactRegex, "").trim()
+    }
+
+    return { chatText, artifact }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (input.trim() && !isLoading && onSendMessage) {
-      onSendMessage(input)
+    if (input.trim() && !isLoading && !isStreaming) {
+      const userMessage = input
       setInput("")
+
+      // Add user message to chat
+      const userMsg: ChatMessage = {
+        id: generateId(),
+        role: "user",
+        content: userMessage,
+        timestamp: new Date(),
+      }
+      onSendMessage?.(userMessage)
+
+      // Stream response from API
+      setIsStreaming(true)
+      try {
+        const response = await fetch("/api/chat-stream", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userMessage,
+            model: selectedModel,
+            messages: messages.map((m) => ({
+              role: m.role,
+              content: m.content,
+            })),
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`)
+        }
+
+        // Read and parse SSE stream
+        const reader = response.body?.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ""
+        let fullStreamText = ""
+        let finalArtifact: Artifact | null = null
+
+        while (reader) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split("\n")
+          buffer = lines.pop() || ""
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const data = JSON.parse(line.slice(6))
+
+                if (data.type === "content_block_delta" && data.delta?.text) {
+                  fullStreamText += data.delta.text
+
+                  // Check if we have a complete artifact in the stream so far
+                  const { chatText, artifact } = parseArtifactFromText(fullStreamText)
+                  if (artifact && !finalArtifact) {
+                    finalArtifact = artifact
+                  }
+                } else if (data.type === "message_stop") {
+                  // Stream complete
+                  break
+                } else if (data.type === "error") {
+                  console.error("Stream error:", data.error)
+                  throw new Error(data.error)
+                }
+              } catch (e) {
+                console.error("Error parsing SSE:", e)
+              }
+            }
+          }
+        }
+
+        // Parse final text and artifact
+        const { chatText, artifact } = parseArtifactFromText(fullStreamText)
+
+        // Add assistant message to chat (without artifact tags)
+        if (chatText) {
+          const assistantMsg: ChatMessage = {
+            id: generateId(),
+            role: "assistant",
+            content: chatText,
+            timestamp: new Date(),
+          }
+          onSendMessage?.(assistantMsg.content)
+        }
+
+        // Create artifact if present
+        if (artifact) {
+          onArtifactCreated?.(artifact)
+        }
+      } catch (error: any) {
+        console.error("Streaming error:", error)
+
+        // Add error message
+        const errorMsg: ChatMessage = {
+          id: generateId(),
+          role: "assistant",
+          content: `Error: ${error.message || "Failed to get response"}`,
+          timestamp: new Date(),
+        }
+        onSendMessage?.(errorMsg.content)
+      } finally {
+        setIsStreaming(false)
+      }
     }
   }
 
@@ -135,7 +284,7 @@ export default function ArtifactChatPanel({
               placeholder="Send a message to AI..."
               className="resize-none"
               rows={2}
-              disabled={isLoading}
+              disabled={isLoading || isStreaming}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault()
@@ -145,10 +294,10 @@ export default function ArtifactChatPanel({
             />
             <Button
               type="submit"
-              disabled={!input.trim() || isLoading}
+              disabled={!input.trim() || isLoading || isStreaming}
               className="self-end"
             >
-              {isLoading ? (
+              {isLoading || isStreaming ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Send className="h-4 w-4" />

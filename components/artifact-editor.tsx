@@ -16,20 +16,50 @@ import type { DocumentVersion, ChatMessage } from "@/types/artifact"
 import { EDITING_MODES } from "@/lib/editing-modes"
 
 export interface ArtifactEditorProps {
+  initialDocumentText?: string
+  initialDocumentTitle?: string
+  selectedModel?: string
+  onSelectedModelChange?: (model: string) => void
   onChatMessage: (message: ChatMessage) => void
   className?: string
 }
 
-export default function ArtifactEditor({ onChatMessage, className }: ArtifactEditorProps) {
-  const [documentTitle, setDocumentTitle] = React.useState("Untitled Document")
-  const [documentText, setDocumentText] = React.useState("")
+export default function ArtifactEditor({
+  initialDocumentText = "",
+  initialDocumentTitle = "Untitled Document",
+  selectedModel: propSelectedModel = "claude-3-5-haiku-20241022",
+  onSelectedModelChange,
+  onChatMessage,
+  className,
+}: ArtifactEditorProps) {
+  const [documentTitle, setDocumentTitle] = React.useState(initialDocumentTitle)
+  const [documentText, setDocumentText] = React.useState(initialDocumentText)
   const [selectedMode, setSelectedMode] = React.useState("improve_selection")
   const [selectedTone, setSelectedTone] = React.useState("professional")
   const [versions, setVersions] = React.useState<DocumentVersion[]>([])
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
-  const [selectedModel, setSelectedModel] = React.useState("claude-3-5-haiku-20241022")
+  const [selectedModel, setSelectedModel] = React.useState(propSelectedModel)
+
+  // Sync with parent-provided props when they change
+  React.useEffect(() => {
+    if (initialDocumentText) {
+      setDocumentText(initialDocumentText)
+    }
+  }, [initialDocumentText])
+
+  React.useEffect(() => {
+    if (initialDocumentTitle) {
+      setDocumentTitle(initialDocumentTitle)
+    }
+  }, [initialDocumentTitle])
+
+  // Notify parent of model changes
+  const handleModelChange = (model: string) => {
+    setSelectedModel(model)
+    onSelectedModelChange?.(model)
+  }
 
   // Selection state
   const [selection, setSelection] = React.useState<{
@@ -343,7 +373,7 @@ export default function ArtifactEditor({ onChatMessage, className }: ArtifactEdi
           />
           <ModelSelector
             currentModel={selectedModel}
-            onModelChange={setSelectedModel}
+            onModelChange={handleModelChange}
           />
         </div>
       </div>

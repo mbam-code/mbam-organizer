@@ -2,19 +2,39 @@
 
 import * as React from "react"
 import ArtifactEditor from "@/components/artifact-editor"
-import ArtifactChatPanel from "@/components/artifact-chat-panel"
+import ArtifactChatPanel, { type Artifact } from "@/components/artifact-chat-panel"
 import type { ChatMessage } from "@/types/artifact"
 
 export default function ArtifactPage() {
   const [messages, setMessages] = React.useState<ChatMessage[]>([])
+  const [selectedModel, setSelectedModel] = React.useState("claude-3-5-haiku-20241022")
 
-  const handleChatMessage = (message: ChatMessage) => {
-    setMessages((prev) => [...prev, message])
+  // Current artifact state - manages the artifact displayed in the editor
+  const [currentArtifact, setCurrentArtifact] = React.useState<{
+    identifier: string
+    type: string
+    title: string
+    content: string
+  } | null>(null)
+
+  const handleChatMessage = (message: ChatMessage | string) => {
+    if (typeof message === "string") {
+      // String content - wrap in ChatMessage
+      const chatMsg: ChatMessage = {
+        id: `msg-${Date.now()}`,
+        role: "assistant",
+        content: message,
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, chatMsg])
+    } else {
+      // Already a ChatMessage
+      setMessages((prev) => [...prev, message])
+    }
   }
 
   const handleUserMessage = (content: string) => {
-    // This would be for freeform chat with AI
-    // For now, we'll just add the user message
+    // Add user message to chat
     const userMessage: ChatMessage = {
       id: `msg-${Date.now()}`,
       role: "user",
@@ -22,9 +42,11 @@ export default function ArtifactPage() {
       timestamp: new Date(),
     }
     handleChatMessage(userMessage)
+  }
 
-    // TODO: Implement freeform chat with AI
-    // You could call another API endpoint here for general conversation
+  const handleArtifactCreated = (artifact: Artifact) => {
+    // Update current artifact when one is created from chat
+    setCurrentArtifact(artifact)
   }
 
   return (
@@ -35,7 +57,9 @@ export default function ArtifactPage() {
         <div className="w-[400px] border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex-shrink-0">
           <ArtifactChatPanel
             messages={messages}
+            selectedModel={selectedModel}
             onSendMessage={handleUserMessage}
+            onArtifactCreated={handleArtifactCreated}
             className="h-full"
           />
         </div>
@@ -43,6 +67,10 @@ export default function ArtifactPage() {
         {/* Right Panel: Artifact Editor */}
         <div className="flex-1 bg-gray-50 dark:bg-gray-900">
           <ArtifactEditor
+            initialDocumentText={currentArtifact?.content || ""}
+            initialDocumentTitle={currentArtifact?.title || "Untitled Document"}
+            selectedModel={selectedModel}
+            onSelectedModelChange={setSelectedModel}
             onChatMessage={handleChatMessage}
             className="h-full"
           />
