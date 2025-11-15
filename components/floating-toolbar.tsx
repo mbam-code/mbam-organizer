@@ -59,7 +59,7 @@ export default function FloatingToolbar({
             variant="ghost"
             onClick={onImprove}
             disabled={isLoading}
-            className="h-8 px-3 text-xs font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20"
+            className="h-8 px-3 text-xs font-medium hover:bg-secondary/10 dark:hover:bg-secondary/10"
           >
             <Sparkles className="w-3.5 h-3.5 mr-1.5" />
             Improve

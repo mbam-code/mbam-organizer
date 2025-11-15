@@ -262,7 +262,6 @@ export default function ContentRefinement() {
                   <Button
                     size="sm"
                     onClick={handleSaveDocument}
-                    className="bg-blue-600 hover:bg-blue-700"
                   >
                     Save
                   </Button>
@@ -309,11 +308,11 @@ export default function ContentRefinement() {
         </div>
 
         {/* Instructions */}
-        <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2">
+        <div className="mt-6 bg-accent/10 dark:bg-accent/10 border border-accent rounded-lg p-4">
+          <h3 className="text-sm font-semibold text-foreground mb-2">
             How to use:
           </h3>
-          <ol className="text-sm text-blue-800 dark:text-blue-400 space-y-1 ml-4 list-decimal">
+          <ol className="text-sm text-foreground space-y-1 ml-4 list-decimal">
             <li>Click "Edit" to write or paste your initial content</li>
             <li>Select expert skills from the dropdown to guide Claude's refinements</li>
             <li>Optionally, highlight text in the document to focus on specific sections</li>

@@ -13,7 +13,7 @@ import { generateId } from "@/lib/utils"
 
 const COLUMN_COLORS = [
   { name: "Default", value: "bg-white dark:bg-gray-800" },
-  { name: "Blue", value: "bg-blue-50 dark:bg-blue-900/30" },
+  { name: "Blue", value: "bg-secondary/10 dark:bg-secondary/10" },
   { name: "Green", value: "bg-green-50 dark:bg-green-900/30" },
   { name: "Yellow", value: "bg-yellow-50 dark:bg-yellow-900/30" },
   { name: "Purple", value: "bg-purple-50 dark:bg-purple-900/30" },

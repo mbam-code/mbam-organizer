@@ -76,12 +76,12 @@ export default function ChatPanel({
                 className={cn(
                   "max-w-[80%] rounded-lg p-3",
                   message.role === "user"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary/10 dark:bg-secondary/10 text-foreground"
                 )}
               >
                 {message.selectedText && (
-                  <div className="mb-2 pb-2 border-b border-blue-400 dark:border-gray-700">
+                  <div className="mb-2 pb-2 border-b border-border">
                     <p className="text-xs opacity-75 mb-1">Selected text:</p>
                     <p className="text-xs italic">"{message.selectedText}"</p>
                   </div>
@@ -102,13 +102,13 @@ export default function ChatPanel({
 
       {/* Selection Indicator */}
       {selectedText && (
-        <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border-t border-blue-200 dark:border-blue-800">
+        <div className="px-4 py-2 bg-accent/10 dark:bg-accent/10 border-t border-accent">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-blue-900 dark:text-blue-300 mb-1">
+              <p className="text-xs font-medium text-foreground mb-1">
                 Text selected:
               </p>
-              <p className="text-xs text-blue-700 dark:text-blue-400 italic truncate">
+              <p className="text-xs text-foreground italic truncate">
                 "{selectedText}"
               </p>
             </div>

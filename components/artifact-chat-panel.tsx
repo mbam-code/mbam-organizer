@@ -246,10 +246,10 @@ export default function ArtifactChatPanel({
                   className={cn(
                     "max-w-[80%] rounded-lg p-3",
                     message.role === "user"
-                      ? "bg-blue-500 text-white"
+                      ? "bg-primary text-primary-foreground"
                       : message.metadata?.type === "explanation"
-                      ? "bg-green-50 dark:bg-green-900/20 text-green-900 dark:text-green-300 border border-green-200 dark:border-green-800"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                      ? "bg-accent/10 dark:bg-accent/10 text-foreground border border-accent"
+                      : "bg-secondary/10 dark:bg-secondary/10 text-foreground"
                   )}
                 >
                   <p className="text-sm whitespace-pre-wrap">{message.content}</p>

@@ -93,13 +93,13 @@ export default function VersionHistory({
               ) : (
                 <div className="space-y-3">
                   {/* Current version */}
-                  <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                  <div className="p-3 rounded-lg bg-accent/10 dark:bg-accent/10 border border-accent">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <div className="text-sm font-medium text-blue-900 dark:text-blue-300">
+                        <div className="text-sm font-medium text-foreground">
                           Current Version
                         </div>
-                        <div className="text-xs text-blue-700 dark:text-blue-400 mt-1">
+                        <div className="text-xs text-foreground mt-1">
                           {currentDocumentText.slice(0, 60)}
                           {currentDocumentText.length > 60 && "..."}
                         </div>
