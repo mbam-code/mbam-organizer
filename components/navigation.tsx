@@ -12,17 +12,12 @@ export default function Navigation() {
   const navItems = [
     {
       href: "/",
-      label: "Kanban Board",
+      label: "Missions",
       icon: LayoutDashboard,
     },
     {
-      href: "/content",
-      label: "Content Studio",
-      icon: FileText,
-    },
-    {
       href: "/artifact",
-      label: "Artifact Editor",
+      label: "The Booth",
       icon: FileEdit,
     },
   ]
