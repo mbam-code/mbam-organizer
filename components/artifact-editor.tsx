@@ -6,6 +6,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import EditorModeSelector from "@/components/editor-mode-selector"
 import FloatingToolbar from "@/components/floating-toolbar"
+import ModelSelector from "@/components/model-selector"
+import InstructionsDialog from "@/components/instructions-dialog"
 import VersionHistory from "@/components/version-history"
 import { Copy, Download, Clock, Loader2, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -27,6 +29,7 @@ export default function ArtifactEditor({ onChatMessage, className }: ArtifactEdi
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const [selectedModel, setSelectedModel] = React.useState("claude-3-5-haiku-20241022")
 
   // Selection state
   const [selection, setSelection] = React.useState<{
@@ -35,6 +38,10 @@ export default function ArtifactEditor({ onChatMessage, className }: ArtifactEdi
     end: number
   } | null>(null)
   const [toolbarPosition, setToolbarPosition] = React.useState<{ x: number; y: number } | null>(null)
+
+  // Instructions dialog state
+  const [isInstructionsDialogOpen, setIsInstructionsDialogOpen] = React.useState(false)
+  const [pendingEditMode, setPendingEditMode] = React.useState<string | null>(null)
 
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
 
@@ -47,20 +54,34 @@ export default function ArtifactEditor({ onChatMessage, className }: ArtifactEdi
     const end = textarea.selectionEnd
     const selectedText = documentText.substring(start, end).trim()
 
+    console.log("[SELECTION DEBUG] handleTextSelect fired", {
+      selectionStart: start,
+      selectionEnd: end,
+      selectedText,
+      hasSelection: selectedText.length > 0,
+    })
+
     if (selectedText.length > 0) {
       setSelection({ text: selectedText, start, end })
 
-      // Calculate toolbar position
-      const rect = textarea.getBoundingClientRect()
-      const textBeforeSelection = documentText.substring(0, start)
-      const lines = textBeforeSelection.split("\n").length
+      // Use a simple approach: position toolbar based on textarea bounds
+      // and center it horizontally
+      const textareaRect = textarea.getBoundingClientRect()
 
-      // Approximate position (this is simplified - a production version would be more precise)
-      const x = rect.left + rect.width / 2
-      const y = rect.top + (lines * 20) - textarea.scrollTop - 60
+      // Position toolbar at the top-center of the textarea, above the visible area
+      const x = textareaRect.left + textareaRect.width / 2
+      const y = textareaRect.top - 80  // 80px above textarea top
 
+      console.log("[SELECTION DEBUG] Setting toolbar position:", {
+        x,
+        y,
+        textareaTop: textareaRect.top,
+        textareaLeft: textareaRect.left,
+        textareaWidth: textareaRect.width,
+      })
       setToolbarPosition({ x, y })
     } else {
+      console.log("[SELECTION DEBUG] Clearing selection (no text)")
       setSelection(null)
       setToolbarPosition(null)
     }
@@ -68,6 +89,8 @@ export default function ArtifactEditor({ onChatMessage, className }: ArtifactEdi
 
   // Clear selection
   const clearSelection = () => {
+    console.log("[SELECTION DEBUG] clearSelection() called")
+    console.trace("[SELECTION DEBUG] clearSelection stack trace")
     setSelection(null)
     setToolbarPosition(null)
   }
@@ -122,6 +145,7 @@ export default function ArtifactEditor({ onChatMessage, className }: ArtifactEdi
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          model: selectedModel,
           mode,
           selectedText: isSelectionEdit ? selection!.text : undefined,
           fullDocumentText: documentText,
@@ -209,10 +233,34 @@ export default function ArtifactEditor({ onChatMessage, className }: ArtifactEdi
     }
   }
 
+  // Open instructions dialog for a given mode
+  const openInstructionsDialog = (mode: string) => {
+    if (!selection) {
+      setError("No text selected. Please select text first.")
+      return
+    }
+    setPendingEditMode(mode)
+    setIsInstructionsDialogOpen(true)
+  }
+
+  // Handle instructions dialog apply
+  const handleInstructionsApply = (instructions: string) => {
+    if (!pendingEditMode) return
+    setIsInstructionsDialogOpen(false)
+    handleEdit(pendingEditMode, instructions)
+    setPendingEditMode(null)
+  }
+
+  // Handle instructions dialog cancel
+  const handleInstructionsCancel = () => {
+    setIsInstructionsDialogOpen(false)
+    setPendingEditMode(null)
+  }
+
   // Quick action handlers for floating toolbar
-  const handleImprove = () => handleEdit("improve_selection")
-  const handleRewrite = () => handleEdit("rewrite_selection")
-  const handleExplain = () => handleEdit("explain_selection")
+  const handleImprove = () => openInstructionsDialog("improve_selection")
+  const handleRewrite = () => openInstructionsDialog("rewrite_selection")
+  const handleExplain = () => openInstructionsDialog("explain_selection")
   const handleMoreOptions = () => {
     // TODO: Show modal with all editing options
     alert("More options coming soon!")
@@ -286,12 +334,18 @@ export default function ArtifactEditor({ onChatMessage, className }: ArtifactEdi
         </div>
 
         {/* Mode Selector */}
-        <EditorModeSelector
-          selectedMode={selectedMode}
-          onModeChange={setSelectedMode}
-          selectedTone={selectedTone}
-          onToneChange={setSelectedTone}
-        />
+        <div className="flex items-center justify-between gap-4">
+          <EditorModeSelector
+            selectedMode={selectedMode}
+            onModeChange={setSelectedMode}
+            selectedTone={selectedTone}
+            onToneChange={setSelectedTone}
+          />
+          <ModelSelector
+            currentModel={selectedModel}
+            onModelChange={setSelectedModel}
+          />
+        </div>
       </div>
 
       {/* Error Display */}
@@ -312,7 +366,18 @@ export default function ArtifactEditor({ onChatMessage, className }: ArtifactEdi
           onChange={(e) => setDocumentText(e.target.value)}
           onMouseUp={handleTextSelect}
           onKeyUp={handleTextSelect}
-          onClick={clearSelection}
+          onClick={(e) => {
+            console.log("[SELECTION DEBUG] onClick fired, event.detail:", e.detail)
+            // Only clear selection if this is a plain click (not a drag)
+            // Check if there's no selection in the textarea
+            const textarea = textareaRef.current
+            if (textarea && textarea.selectionStart === textarea.selectionEnd) {
+              console.log("[SELECTION DEBUG] onClick: No selection detected, clearing")
+              clearSelection()
+            } else {
+              console.log("[SELECTION DEBUG] onClick: Selection exists, NOT clearing")
+            }
+          }}
           placeholder="Start writing your content here..."
           className="h-full resize-none border-0 rounded-none focus:ring-0 font-serif text-base leading-relaxed p-6"
           disabled={isLoading}
@@ -338,6 +403,18 @@ export default function ArtifactEditor({ onChatMessage, className }: ArtifactEdi
           isLoading={isLoading}
         />
       </div>
+
+      {/* Instructions Dialog */}
+      {pendingEditMode && (
+        <InstructionsDialog
+          isOpen={isInstructionsDialogOpen}
+          mode={pendingEditMode}
+          modeLabel={EDITING_MODES.find(m => m.id === pendingEditMode)?.label || pendingEditMode}
+          selectedText={selection?.text || ""}
+          onApply={handleInstructionsApply}
+          onCancel={handleInstructionsCancel}
+        />
+      )}
 
       {/* Version History Panel */}
       <VersionHistory
