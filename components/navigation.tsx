@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, FileText } from "lucide-react"
+import { LayoutDashboard, FileText, FileEdit } from "lucide-react"
 
 export default function Navigation() {
   const pathname = usePathname()
@@ -19,6 +19,11 @@ export default function Navigation() {
       href: "/content",
       label: "Content Studio",
       icon: FileText,
+    },
+    {
+      href: "/artifact",
+      label: "Artifact Editor",
+      icon: FileEdit,
     },
   ]
 
