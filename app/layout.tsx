@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import "./globals.css"
 import { Providers } from "@/components/providers"
 import Navigation from "@/components/navigation"
+import { ColorDebugInspector } from "@/components/color-debug-inspector"
 
 export const metadata: Metadata = {
   title: "MBAM Organizer - Content Production Kanban",
@@ -19,6 +20,7 @@ export default function RootLayout({
         <Providers>
           <Navigation />
           {children}
+          <ColorDebugInspector />
         </Providers>
       </body>
     </html>
