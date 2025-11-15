@@ -13,7 +13,10 @@ import { PORSCHE_COLORS, LIGHT_MODE_TOKENS, DARK_MODE_TOKENS } from "@/lib/porsc
  * 4. Browser info for debugging cross-browser differences
  *
  * Usage: Add <ColorDebugInspector /> near the end of your layout
- * Press 'D' to toggle the inspector
+ *
+ * UI:
+ * - When closed: Click the "🎨 Colors" pill in the bottom-right to open
+ * - When open: Click the "✕" button in the top-right to close
  */
 
 interface ComputedColors {
@@ -104,25 +107,14 @@ export function ColorDebugInspector() {
     return () => observer.disconnect()
   }, [])
 
-  // Toggle with 'D' key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === "d" && e.ctrlKey) {
-        setIsOpen((prev) => !prev)
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [])
 
   if (!isOpen) {
     return (
       <div className="fixed bottom-4 right-4 z-50">
         <button
           onClick={() => setIsOpen(true)}
-          className="px-3 py-2 text-xs font-mono bg-primary text-primary-foreground rounded opacity-50 hover:opacity-100 transition-opacity"
-          title="Press Ctrl+D to toggle color inspector"
+          className="px-4 py-2 text-xs font-medium font-mono bg-primary text-primary-foreground rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95"
+          title="Click to open color inspector"
         >
           🎨 Colors
         </button>
@@ -134,10 +126,11 @@ export function ColorDebugInspector() {
     <div className="fixed bottom-4 right-4 z-50 max-w-md bg-card border border-border rounded-lg shadow-lg p-4 font-mono text-xs overflow-y-auto max-h-96">
       {/* Header */}
       <div className="flex justify-between items-center mb-3">
-        <h3 className="font-bold text-primary">Color Inspector</h3>
+        <h3 className="font-bold text-foreground text-sm">Color Inspector</h3>
         <button
           onClick={() => setIsOpen(false)}
-          className="text-muted-foreground hover:text-foreground"
+          className="text-foreground hover:text-primary hover:bg-primary/10 p-1 rounded transition-colors"
+          title="Close inspector"
         >
           ✕
         </button>
@@ -145,51 +138,51 @@ export function ColorDebugInspector() {
 
       {/* Theme & Browser Info */}
       <div className="border-b border-border pb-2 mb-2">
-        <div className="text-muted-foreground">
-          <div>Theme: <span className="text-primary font-bold">{isDarkMode ? "DARK" : "LIGHT"}</span></div>
-          <div>Browser: <span className="text-accent">{browserInfo}</span></div>
+        <div className="text-foreground space-y-1">
+          <div className="font-semibold">Theme: <span className="text-primary font-bold">{isDarkMode ? "DARK" : "LIGHT"}</span></div>
+          <div className="font-semibold">Browser: <span className="text-foreground font-mono text-[11px]">{browserInfo}</span></div>
         </div>
       </div>
 
       {/* Active CSS Variables */}
       <div className="border-b border-border pb-2 mb-2">
-        <h4 className="font-bold text-secondary mb-1">Active CSS Variables:</h4>
+        <h4 className="font-bold text-foreground mb-2 text-sm">Active CSS Variables:</h4>
         {Object.entries(computedColors)
           .filter(([_, v]) => v)
           .slice(0, 10)
           .map(([key, value]) => (
-            <div key={key} className="flex items-center gap-2 mb-1">
-              <code className="text-muted-foreground flex-1">{key}:</code>
+            <div key={key} className="flex items-center gap-2 mb-2 text-foreground">
+              <code className="flex-1 text-[11px] font-semibold">{key}:</code>
               <div
-                className="w-6 h-6 rounded border border-border"
+                className="w-6 h-6 rounded border-2 border-border flex-shrink-0"
                 style={{ backgroundColor: value }}
                 title={value}
               />
-              <code className="text-accent text-[10px]">{value}</code>
+              <code className="text-[10px] font-semibold whitespace-nowrap">{value}</code>
             </div>
           ))}
       </div>
 
       {/* Porsche Color Palette */}
       <div>
-        <h4 className="font-bold text-secondary mb-1">Porsche Palette:</h4>
-        <div className="grid grid-cols-2 gap-1">
+        <h4 className="font-bold text-foreground mb-2 text-sm">Porsche Palette:</h4>
+        <div className="grid grid-cols-2 gap-2">
           {Object.entries(PORSCHE_COLORS).map(([name, hex]) => (
-            <div key={name} className="flex items-center gap-1">
+            <div key={name} className="flex items-center gap-2">
               <div
-                className="w-4 h-4 rounded border border-border"
+                className="w-4 h-4 rounded border border-border flex-shrink-0"
                 title={hex}
                 style={{ backgroundColor: hex }}
               />
-              <code className="text-[9px] text-muted-foreground">{name}</code>
+              <code className="text-[10px] text-foreground font-semibold truncate">{name}</code>
             </div>
           ))}
         </div>
       </div>
 
       {/* Instructions */}
-      <div className="border-t border-border mt-2 pt-2 text-[10px] text-muted-foreground">
-        Press <kbd className="bg-muted px-1 rounded">Ctrl+D</kbd> to toggle
+      <div className="border-t border-border mt-3 pt-2 text-[11px] text-foreground">
+        Click the <span className="font-semibold">Colors</span> button to reopen this panel
       </div>
     </div>
   )
