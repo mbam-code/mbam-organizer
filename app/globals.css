@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /**
- * Porsche Motorsport Design System - CSS Variables
+ * MBAM Brand Design System - CSS Variables
  *
  * These variables define the entire color system for the application.
  * Light mode is the default; dark mode overrides these when .dark class is present.
@@ -12,11 +12,34 @@
  * when dark mode is active.
  */
 
+/* MBAM Brand Primitives */
+:root {
+  /* Motorsport-inspired red/black/yellow palette */
+  --mbam-black: #000000;
+  --mbam-white: #ffffff;
+
+  /* Primary brand red */
+  --mbam-red: #b12b28;
+  --mbam-red-bright: #d5001c;
+
+  /* Accent colors */
+  --mbam-yellow: #f7e731;
+  --mbam-gold: #ebd698;
+
+  /* Greyscale */
+  --mbam-grey-900: #121212;
+  --mbam-grey-800: #1b1b1b;
+  --mbam-grey-700: #232323;
+  --mbam-grey-500: #464c47;
+  --mbam-grey-200: #c8c8c8;
+  --mbam-grey-100: #f5f5f5;
+}
+
 /* Light mode (default) */
 :root {
   color-scheme: light;
 
-  /* Porsche Motorsport Light Theme */
+  /* MBAM Light Theme */
   --background: #f5f5f5;
   --foreground: #000000;
   --card: #ffffff;
@@ -42,7 +65,7 @@
 .dark {
   color-scheme: dark;
 
-  /* Porsche Motorsport Dark Theme */
+  /* MBAM Dark Theme */
   --background: #121212;
   --foreground: #ffffff;
   --card: #1b1b1b;

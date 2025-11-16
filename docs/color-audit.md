@@ -1,7 +1,7 @@
 # Color System Audit
 
 **Date:** 2025-11-15
-**Status:** Initial audit before Porsche Motorsport redesign
+**Status:** MBAM Brand Design System Implementation
 
 ---
 
@@ -11,7 +11,7 @@ The app currently uses a **partial color system** with hardcoded values scattere
 
 1. **Hardcoded body colors** in `globals.css` that don't use CSS variables
 2. **No Tailwind theme configuration** for semantic color tokens
-3. **Blue icons in theme toggle** (line 33 of `theme-toggle.tsx`) that clash with Porsche red/black scheme
+3. **Blue icons in theme toggle** (line 33 of `theme-toggle.tsx`) that clash with brand red/black scheme
 4. **`next-themes` configured with `class` attribute** but CSS may also respond to `prefers-color-scheme`, causing conflicts
 5. **No explicit `color-scheme` CSS property** in root or dark mode selector
 
@@ -70,8 +70,8 @@ theme: {
 ```
 
 **Issues:**
-- Moon icon is **hardcoded to `text-blue-600`**, which stands out in a Porsche red/black scheme
-- Should use a Porsche gold or grey instead
+- Moon icon is **hardcoded to `text-blue-600`**, which stands out in a brand red/black scheme
+- Should use a brand gold or grey instead
 
 ### 4. **Providers & Theme Context** (components/providers.tsx)
 
@@ -103,7 +103,7 @@ theme: {
 - `bg-gray-50`, `bg-gray-100` (various greys)
 - `text-gray-500`, `text-gray-600` (various text greys)
 - `hover:border-gray-300` (hover states)
-- Any `blue-*` classes (Tailwind defaults, not in Porsche scheme)
+- Any `blue-*` classes (Tailwind defaults, not in brand color scheme)
 
 ---
 
@@ -141,7 +141,7 @@ The app does **not currently define CSS variables** for colors. This means:
 
 ## Semantic Color Tokens Needed
 
-For a Porsche Motorsport design system, we need:
+For a MBAM Brand design system, we need:
 
 ```
 Light Mode:
@@ -149,11 +149,11 @@ Light Mode:
   --foreground: #000000 (black text)
   --card: #FFFFFF (white cards)
   --card-foreground: #1B1B1B (dark text on cards)
-  --primary: #B12B28 (Porsche red)
+  --primary: #B12B28 (brand red)
   --primary-foreground: #FFFFFF (white text on red)
   --secondary: #464C47 (medium grey)
   --secondary-foreground: #FFFFFF (light text)
-  --accent: #F7E731 (Porsche yellow)
+  --accent: #F7E731 (brand yellow)
   --accent-foreground: #000000 (black text on yellow)
   --border: #C8C8C8 (light grey)
   --input: #F5F5F5 (light grey for inputs)
@@ -187,8 +187,8 @@ Dark Mode:
 
 ### Immediate (Step 1):
 - ✅ Document current state (this audit)
-- Create `lib/porsche-colors.ts` with all color constants
-- Create `lib/porsche-theme.css` or update `globals.css` with CSS variables
+- Create `lib/brand-colors.ts` with all color constants
+- Create `lib/brand-theme.css` or update `globals.css` with CSS variables
 
 ### Short-term (Step 2):
 - Update `tailwind.config.ts` to use CSS variables
@@ -197,14 +197,14 @@ Dark Mode:
 
 ### Medium-term (Step 3):
 - Audit all components for hardcoded Tailwind colors
-- Replace `text-blue-*`, `bg-gray-*` etc. with Porsche tokens
+- Replace `text-blue-*`, `bg-gray-*` etc. with MBAM brand tokens
 - Create debug component to inspect active colors in both browsers
 
 ---
 
 ## Files to Modify
 
-1. `lib/porsche-colors.ts` — **New file** for color constants
+1. `lib/brand-colors.ts` — **New file** for color constants
 2. `app/globals.css` — Add CSS variables, fix dark mode
 3. `tailwind.config.ts` — Wire CSS variables into theme
 4. `components/theme-toggle.tsx` — Fix blue moon icon

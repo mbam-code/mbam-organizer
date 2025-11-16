@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useState } from "react"
-import { PORSCHE_COLORS, LIGHT_MODE_TOKENS, DARK_MODE_TOKENS } from "@/lib/porsche-colors"
+import { MBAM_BRAND_COLORS, LIGHT_MODE_TOKENS, DARK_MODE_TOKENS } from "@/lib/brand-colors"
 
 /**
  * Color Debug Inspector
@@ -9,7 +9,7 @@ import { PORSCHE_COLORS, LIGHT_MODE_TOKENS, DARK_MODE_TOKENS } from "@/lib/porsc
  * A simple overlay component that shows:
  * 1. Current theme (light/dark)
  * 2. Active CSS variables and their computed values
- * 3. Porsche color palette reference
+ * 3. MBAM brand color palette reference
  * 4. Browser info for debugging cross-browser differences
  *
  * Usage: Add <ColorDebugInspector /> near the end of your layout
@@ -163,11 +163,11 @@ export function ColorDebugInspector() {
           ))}
       </div>
 
-      {/* Porsche Color Palette */}
+      {/* MBAM Brand Palette */}
       <div>
-        <h4 className="font-bold text-foreground mb-2 text-sm">Porsche Palette:</h4>
+        <h4 className="font-bold text-foreground mb-2 text-sm">MBAM Brand Palette:</h4>
         <div className="grid grid-cols-2 gap-2">
-          {Object.entries(PORSCHE_COLORS).map(([name, hex]) => (
+          {Object.entries(MBAM_BRAND_COLORS).map(([name, hex]) => (
             <div key={name} className="flex items-center gap-2">
               <div
                 className="w-4 h-4 rounded border border-border flex-shrink-0"

@@ -1,7 +1,7 @@
 /**
- * Porsche Motorsport Design System Colors
+ * MBAM Brand Design System Colors
  *
- * A unified color palette inspired by Porsche's motorsport heritage.
+ * A unified color palette inspired by motorsport heritage.
  * These values are the single source of truth for the entire application.
  *
  * Usage:
@@ -10,16 +10,20 @@
  * - In Tailwind: Extended theme uses CSS variables
  */
 
-export const PORSCHE_COLORS = {
-  // Brand core
+/**
+ * MBAM Brand Primitives
+ * Core color palette that defines the visual identity
+ */
+export const MBAM_BRAND_COLORS = {
+  // Neutrals
   black: "#000000",
   white: "#FFFFFF",
 
-  // Porsche primary red
-  red: "#B12B28", // Official Porsche red
-  redBright: "#D5001C", // Bright motorsport red (for alerts/destructive)
+  // MBAM Primary Red
+  red: "#B12B28", // Bold motorsport red
+  redBright: "#D5001C", // Bright red for alerts/destructive
 
-  // Porsche accent gold
+  // MBAM Accent Colors
   yellow: "#F7E731", // Bright yellow accent
   gold: "#EBD698", // Warm gold for secondary accents
 
@@ -34,72 +38,72 @@ export const PORSCHE_COLORS = {
 
 /**
  * Light Mode Semantic Tokens
- * These map Porsche colors to semantic roles for light backgrounds
+ * These map MBAM brand colors to semantic roles for light backgrounds
  */
 export const LIGHT_MODE_TOKENS = {
-  background: PORSCHE_COLORS.grey100, // Card/section backgrounds
-  foreground: PORSCHE_COLORS.black, // Primary text
+  background: MBAM_BRAND_COLORS.grey100, // Page/section backgrounds
+  foreground: MBAM_BRAND_COLORS.black, // Primary text
 
-  card: PORSCHE_COLORS.white,
-  cardForeground: PORSCHE_COLORS.grey800,
+  card: MBAM_BRAND_COLORS.white,
+  cardForeground: MBAM_BRAND_COLORS.grey800,
 
-  popover: PORSCHE_COLORS.white,
-  popoverForeground: PORSCHE_COLORS.grey800,
+  popover: MBAM_BRAND_COLORS.white,
+  popoverForeground: MBAM_BRAND_COLORS.grey800,
 
-  border: PORSCHE_COLORS.grey200,
-  input: PORSCHE_COLORS.grey100,
+  border: MBAM_BRAND_COLORS.grey200,
+  input: MBAM_BRAND_COLORS.grey100,
 
-  muted: PORSCHE_COLORS.grey500,
-  mutedForeground: PORSCHE_COLORS.grey100,
+  muted: MBAM_BRAND_COLORS.grey500,
+  mutedForeground: MBAM_BRAND_COLORS.grey100,
 
-  primary: PORSCHE_COLORS.red,
-  primaryForeground: PORSCHE_COLORS.white,
+  primary: MBAM_BRAND_COLORS.red,
+  primaryForeground: MBAM_BRAND_COLORS.white,
 
-  secondary: PORSCHE_COLORS.grey500,
-  secondaryForeground: PORSCHE_COLORS.white,
+  secondary: MBAM_BRAND_COLORS.grey500,
+  secondaryForeground: MBAM_BRAND_COLORS.white,
 
-  accent: PORSCHE_COLORS.yellow,
-  accentForeground: PORSCHE_COLORS.black,
+  accent: MBAM_BRAND_COLORS.yellow,
+  accentForeground: MBAM_BRAND_COLORS.black,
 
-  destructive: PORSCHE_COLORS.redBright,
-  destructiveForeground: PORSCHE_COLORS.white,
+  destructive: MBAM_BRAND_COLORS.redBright,
+  destructiveForeground: MBAM_BRAND_COLORS.white,
 
-  ring: PORSCHE_COLORS.red, // Focus rings use red instead of blue
+  ring: MBAM_BRAND_COLORS.red,
 } as const;
 
 /**
  * Dark Mode Semantic Tokens
- * These map Porsche colors to semantic roles for dark backgrounds
+ * These map MBAM brand colors to semantic roles for dark backgrounds
  */
 export const DARK_MODE_TOKENS = {
-  background: PORSCHE_COLORS.grey900, // Deep dark background
-  foreground: PORSCHE_COLORS.white, // Light text
+  background: MBAM_BRAND_COLORS.grey900, // Deep dark background
+  foreground: MBAM_BRAND_COLORS.white, // Light text
 
-  card: PORSCHE_COLORS.grey800,
-  cardForeground: PORSCHE_COLORS.grey100,
+  card: MBAM_BRAND_COLORS.grey800,
+  cardForeground: MBAM_BRAND_COLORS.grey100,
 
-  popover: PORSCHE_COLORS.grey800,
-  popoverForeground: PORSCHE_COLORS.grey100,
+  popover: MBAM_BRAND_COLORS.grey800,
+  popoverForeground: MBAM_BRAND_COLORS.grey100,
 
-  border: PORSCHE_COLORS.grey700,
-  input: PORSCHE_COLORS.grey700,
+  border: MBAM_BRAND_COLORS.grey700,
+  input: MBAM_BRAND_COLORS.grey700,
 
-  muted: PORSCHE_COLORS.grey500,
-  mutedForeground: PORSCHE_COLORS.grey200,
+  muted: MBAM_BRAND_COLORS.grey500,
+  mutedForeground: MBAM_BRAND_COLORS.grey200,
 
-  primary: PORSCHE_COLORS.red,
-  primaryForeground: PORSCHE_COLORS.white,
+  primary: MBAM_BRAND_COLORS.red,
+  primaryForeground: MBAM_BRAND_COLORS.white,
 
-  secondary: PORSCHE_COLORS.grey700,
-  secondaryForeground: PORSCHE_COLORS.grey100,
+  secondary: MBAM_BRAND_COLORS.grey700,
+  secondaryForeground: MBAM_BRAND_COLORS.grey100,
 
-  accent: PORSCHE_COLORS.gold,
-  accentForeground: PORSCHE_COLORS.black,
+  accent: MBAM_BRAND_COLORS.gold,
+  accentForeground: MBAM_BRAND_COLORS.black,
 
-  destructive: PORSCHE_COLORS.redBright,
-  destructiveForeground: PORSCHE_COLORS.white,
+  destructive: MBAM_BRAND_COLORS.redBright,
+  destructiveForeground: MBAM_BRAND_COLORS.white,
 
-  ring: PORSCHE_COLORS.red, // Focus rings use red
+  ring: MBAM_BRAND_COLORS.red,
 } as const;
 
 /**

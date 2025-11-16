@@ -101,7 +101,7 @@ export default function KanbanBoard() {
               createdAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
             },
           ],
-          color: "bg-blue-50 dark:bg-blue-900/30",
+          color: "bg-primary/10 dark:bg-primary/10",
         },
         {
           id: "col-3",
@@ -291,12 +291,12 @@ export default function KanbanBoard() {
             ))}
 
             {isAddingColumn ? (
-              <div className="shrink-0 w-72 flex flex-col bg-white dark:bg-gray-800 rounded-md shadow-sm border dark:border-gray-700 p-4">
+              <div className="shrink-0 w-72 flex flex-col bg-card rounded-md shadow-sm border dark:border-gray-700 p-4">
                 <Input
                   value={newColumnTitle}
                   onChange={(e) => setNewColumnTitle(e.target.value)}
                   placeholder="Enter column name"
-                  className="mb-3 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                  className="mb-3 dark:bg-card dark:border-border dark:text-foreground"
                 />
                 <div className="flex gap-2">
                   <Button size="sm" onClick={addColumn}>
@@ -318,7 +318,7 @@ export default function KanbanBoard() {
             ) : (
               <Button
                 variant="outline"
-                className="shrink-0 h-12 px-4 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+                className="shrink-0 h-12 px-4 dark:border-border dark:text-foreground dark:hover:bg-secondary/10"
                 onClick={() => setIsAddingColumn(true)}
               >
                 <Plus className="mr-2 h-4 w-4" /> Add Column

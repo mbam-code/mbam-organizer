@@ -69,14 +69,14 @@ export default function Column({
     setShowColorPicker(false)
   }
 
-  const headerColorClass = column.color || "bg-white dark:bg-gray-800"
+  const headerColorClass = column.color || "bg-card"
 
   return (
-    <div className="shrink-0 w-72 flex flex-col bg-gray-50 dark:bg-gray-900 rounded-md shadow-sm border dark:border-gray-700">
+    <div className="shrink-0 w-72 flex flex-col bg-card rounded-md shadow-sm border border-border">
       <div className={`p-3 flex justify-between items-center border-b rounded-t-md ${headerColorClass}`}>
-        <h3 className="font-medium text-sm text-gray-700 dark:text-gray-200 flex items-center">
+        <h3 className="font-medium text-sm text-foreground flex items-center">
           {column.title}
-          <span className="ml-2 text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">
+          <span className="ml-2 text-xs bg-secondary/10 text-muted px-2 py-0.5 rounded-full">
             {column.tasks.length}
           </span>
         </h3>
@@ -125,7 +125,7 @@ export default function Column({
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className={`flex-1 p-2 overflow-y-auto ${snapshot.isDraggingOver ? "bg-blue-50 dark:bg-blue-900/20" : ""}`}
+            className={`flex-1 p-2 overflow-y-auto ${snapshot.isDraggingOver ? "bg-primary/10 dark:bg-primary/10" : ""}`}
           >
             {column.tasks.map((task, index) => (
               <Draggable key={task.id} draggableId={task.id} index={index}>
